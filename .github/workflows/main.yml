@@ -1,0 +1,98 @@
+name: Build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+
+    runs-on: ubuntu-24.04
+    env:
+      TOOLCHAIN_URI: "https://android.googlesource.com/platform/prebuilts/clang/host/linux-x86/+archive/7d21a2e4192728bc50841994d88637ccc45b5692/clang-r458507.tar.gz"
+      ARCH: arm64
+      LLVM: 1
+      LLVM_IAS: 1
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v7
+
+    - name: Cache toolchain
+      id: cache-toolchain
+      uses: actions/cache@v5
+      with:
+        path: toolchain
+        key: toolchain-${{ env.TOOLCHAIN_URI }}
+    - name: Get toolchain
+      if: steps.cache-toolchain.outputs.cache-hit != 'true'
+      run: |
+        mkdir --parents toolchain/clang/host/linux-x86
+        curl --silent "${{ env.TOOLCHAIN_URI }}" | tar --extract --directory=toolchain/clang/host/linux-x86 --gzip
+
+    - name: Setup toolchain path
+      run: echo "${{ github.workspace }}/toolchain/clang/host/linux-x86/bin" >> $GITHUB_PATH
+
+    - name: ksu
+      run: curl -LSs "https://raw.githubusercontent.com/Poko-Apps/MemKernel/main/kernel/setup.sh" | bash -s M freea
+
+    - name: AnyKernel3
+      run: git clone https://github.com/redmax19/AnyKernel3.git
+
+    - name: Build
+      run: |
+        make O=out exynos9830_defconfig
+        make O=out z3s.config
+        make O=out --jobs=$(nproc)
+
+    - name: Build AnyKernel package
+      run: |
+        cp out/arch/arm64/boot/Image AnyKernel3/Image
+        cat << 'EOF' > AnyKernel3/anykernel.sh
+        ### AnyKernel3 Ramdisk Mod Script
+        ## osm0sis @ xda-developers
+
+        ### AnyKernel setup
+        # global properties
+        properties() { '
+        kernel.string=alessandro r8s KernelSU
+        do.devicecheck=1
+        do.modules=0
+        do.systemless=1
+        do.cleanup=1
+        do.cleanuponabort=0
+        device.name1=r8s
+        device.name2=
+        device.name3=
+        device.name4=
+        device.name5=
+        supported.versions=
+        supported.patchlevels=
+        supported.vendorpatchlevels=
+        '; } # end properties
+
+        ### AnyKernel install
+        # boot shell variables
+        block=/dev/block/by-name/boot;
+        is_slot_device=0;
+        ramdisk_compression=auto;
+        patch_vbmeta_flag=auto;
+
+        # import functions/variables and setup patching - see for reference (DO NOT REMOVE)
+        . tools/ak3-core.sh;
+
+        # boot install
+        dump_boot; # use split_boot to skip ramdisk unpack, e.g. for devices with init_boot ramdisk
+
+        write_boot; # use flash_boot to skip ramdisk repack, e.g. for devices with init_boot ramdisk
+        ## end boot install
+        EOF
+
+        cd AnyKernel3
+        zip -r9 "../alessandro r8s KernelSU.zip" * -x .git .github README.md *placeholder
+
+    - name: Upload AnyKernel package
+      uses: actions/upload-artifact@v7
+      with:
+        name: AnyKernel package
+        path: alessandro r8s KernelSU.zip
