@@ -33,9 +33,6 @@ jobs:
     - name: Setup toolchain path
       run: echo "${{ github.workspace }}/toolchain/clang/host/linux-x86/bin" >> $GITHUB_PATH
 
-    - name: ksu
-      run: curl -LSs "https://raw.githubusercontent.com/Poko-Apps/MemKernel/main/kernel/setup.sh" | bash -s M freea
-
     - name: AnyKernel3
       run: git clone https://github.com/redmax19/AnyKernel3.git
 
@@ -43,6 +40,7 @@ jobs:
       run: |
         make O=out exynos9830_defconfig
         make O=out z3s.config
+        make O=out droidspaces.config
         make O=out --jobs=$(nproc)
 
     - name: Build AnyKernel package
