@@ -1,8 +1,20 @@
-#!/bin/bash
-
-export PLATFORM_VERSION=11
-export ANDROID_MAJOR_VERSION=r 
-export ARCH=arm64
-export SEC_BUILD_CONF_VENDOR_BUILD_OS=13
-make exynos9830-x1slte_defconfig
-make
+export NEUTRON_PATH="$(pwd)/neutron-clang"
+          export PATH="$NEUTRON_PATH/bin:$PATH"
+          export LD_LIBRARY_PATH="$HOME/.neutron-tc/lib:$NEUTRON_PATH/lib:$LD_LIBRARY_PATH"
+          
+          make O=out ARCH=arm64 r8s_defconfig
+          
+          make O=out ARCH=arm64 \
+              CC=clang \
+              LLVM=1 \
+              LLVM_IAS=1 \
+              CROSS_COMPILE=aarch64-linux-gnu- \
+              CROSS_COMPILE_COMPAT=arm-linux-gnueabi- \
+              KCFLAGS="-w" \
+              AR=llvm-ar \
+              NM=llvm-nm \
+              OBJCOPY=llvm-objcopy \
+              OBJDUMP=llvm-objdump \
+              STRIP=llvm-strip \
+              HOSTLD=ld \
+              -j$(nproc --all)
