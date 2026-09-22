@@ -34,8 +34,12 @@ jobs:
       run: echo "${{ github.workspace }}/toolchain/clang/host/linux-x86/bin" >> $GITHUB_PATH
 
     - name: ksu
-      run: curl -LSs "https://raw.githubusercontent.com/Poko-Apps/MemKernel/main/kernel/setup.sh" | bash -s M freea
-
+      run: |
+         wget https://raw.githubusercontent.com/rksuorg/kernel_patches/refs/heads/master/manual_hook/kernel-4.19_5.4.patch
+         patch -p1 < kernel-4.19_5.4.patch
+         curl -LSs "https://raw.githubusercontent.com/KernelSU-Next/KernelSU-Next/next/kernel/setup.sh" | bash -s legacy
+         curl -LSs "https://raw.githubusercontent.com/Poko-Apps/MemKernel/main/kernel/setup.sh" | bash -s M freea
+         
     - name: AnyKernel3
       run: git clone https://github.com/redmax19/AnyKernel3.git
 
