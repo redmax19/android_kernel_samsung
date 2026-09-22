@@ -48,6 +48,7 @@ jobs:
     - name: Build AnyKernel package
       run: |
         cp out/arch/arm64/boot/Image AnyKernel3/Image
+        cp out/drivers/memkernel/freea_memk.ko AnyKernel3/freea_memk.ko
         cat << 'EOF' > AnyKernel3/anykernel.sh
         ### AnyKernel3 Ramdisk Mod Script
         ## osm0sis @ xda-developers
