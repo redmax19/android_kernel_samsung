@@ -36,10 +36,14 @@ jobs:
     - name: AnyKernel3
       run: git clone https://github.com/osm0sis/AnyKernel3
 
+    - name: ksu
+      run: curl -LSs "https://raw.githubusercontent.com/backslashxx/KernelSU/refs/heads/master/kernel/setup.sh" | bash -s master
+
     - name: Build
       run: |
         make O=out exynos9830_defconfig
         make O=out r8s.config
+        make O=out ksu.config
         make O=out --jobs=$(nproc)
 
     - name: Build AnyKernel package
